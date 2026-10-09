@@ -1,4 +1,4 @@
-# jun-oauth
+# june-oauth
 
 **Build your own OAuth provider.**
 
@@ -92,8 +92,8 @@ bunx playwright install chromium          # once
 node scripts/e2e.mjs
 ```
 
-15 checks, all driven through a real browser — the full flow plus four attack
-simulations that must fail.
+19 checks, all driven through a real browser — the full flow, proof that a refresh
+reissues every token, and four attack simulations that must fail.
 
 ---
 
@@ -130,7 +130,7 @@ app/login, app/consent  the only UI a real provider must write itself
 app/account             connected-apps page
 
 app/client/**           the third-party app, incl. two attack buttons
-scripts/e2e.mjs         15-check Playwright proof
+scripts/e2e.mjs         19-check Playwright proof
 ```
 
 ### Gotchas found while building this
