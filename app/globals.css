@@ -51,6 +51,9 @@ button:hover, .btn:hover { border-color: var(--acc); }
 table.tok { width: 100%; border-collapse: collapse; font-size: 12px; }
 table.tok td { padding: 7px 8px; border-bottom: 1px solid var(--bd); vertical-align: top; }
 table.tok td:nth-child(2) { color: var(--ok); word-break: break-all; }
+.badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+         color: #0b0d12; background: var(--ok); border-radius: 3px; padding: 1px 5px;
+         margin-left: 5px; vertical-align: middle; }
 .traces { max-height: 640px; overflow-y: auto; }
 .tr { border-left: 3px solid var(--bd); padding: 8px 10px; margin-bottom: 7px;
       background: #10131b; border-radius: 0 7px 7px 0; }

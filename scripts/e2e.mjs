@@ -19,6 +19,10 @@ const jwks = await (await page.request.get(B + "/.well-known/jwks.json")).json()
 check(jwks.keys.length === 1 && !("d" in jwks.keys[0]), "JWKS exposes public key only (no private 'd')");
 
 console.log("\n--- Phase 2: authorization code + PKCE through the browser");
+// Clear any prior session/grant so the suite is self-contained and always
+// exercises the login + consent screens.
+await page.goto(B + "/");
+await page.click("text=Reset all demo state");
 await page.goto(B + "/client");
 await page.click("text=Sign in with YourID");
 await page.waitForURL("**/login**");
@@ -39,7 +43,22 @@ check(body.includes("refresh_token"), "client received a refresh_token");
 check(body.includes("jun@example.com"), "/userinfo returned the email claim");
 check(body.includes("Jun Guo"), "verified id_token carries the profile claims");
 
-console.log("\n--- Phase 3: attacks must fail");
+console.log("\n--- Phase 3: refresh reissues the whole token set");
+const fingerprints = async () => {
+  const cells = await page.locator("table.tok tr td:nth-child(2)").allTextContents();
+  return { access: cells[0].trim(), id: cells[1].trim(), refresh: cells[2].trim() };
+};
+const beforeRefresh = await fingerprints();
+await page.goto(B + "/client/refresh");
+await page.waitForURL("**/client");
+const afterRefresh = await fingerprints();
+check(afterRefresh.access !== beforeRefresh.access, "refresh issues a NEW access_token (distinct jti)");
+check(afterRefresh.id !== beforeRefresh.id, "refresh issues a NEW id_token (distinct jti)");
+check(afterRefresh.refresh !== beforeRefresh.refresh, "refresh rotates the refresh_token itself");
+check(await page.locator("table.tok .badge").count() === 3,
+  "all three token rows are flagged as changed in the UI");
+
+console.log("\n--- Phase 4: attacks must fail");
 await page.goto(B + "/client/replay-code");
 await page.waitForURL("**/client");
 check((await page.textContent("body")).includes("code replay"), "replaying a used authorization code is rejected");
@@ -50,7 +69,7 @@ await page.goto(B + "/client/refresh?replay=1"); // present the retired token
 await page.waitForURL("**/client");
 check((await page.textContent("body")).includes("reuse"), "reusing a rotated refresh token revokes the family");
 
-console.log("\n--- Phase 4: direct endpoint checks");
+console.log("\n--- Phase 5: direct endpoint checks");
 const badRedirect = await page.request.get(
   B + "/oauth/authorize?response_type=code&client_id=demo-client" +
   "&redirect_uri=http://evil.example.com/steal&scope=openid&state=x" +
