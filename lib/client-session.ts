@@ -5,6 +5,8 @@ export type ClientSession = {
   nonce: string;
   code_verifier: string;
   tokens?: Record<string, unknown>;
+  previous?: Record<string, unknown>;        // last token set, so the UI can mark what changed
+  retiredRefreshToken?: string;              // rotated-out token, kept to demo reuse detection
   claims?: Record<string, unknown>;
   userinfo?: Record<string, unknown>;
   error?: string;

@@ -3,8 +3,10 @@ import { clientSessions } from "@/lib/client-session";
 
 const PROVIDER = process.env.ISSUER ?? "http://localhost:3000";
 
-// Deliberately keeps the OLD refresh token around so you can press "replay" and
-// watch reuse detection kill the whole family.
+// A refresh grant returns a COMPLETE new token set: access_token, id_token and a
+// replacement refresh_token. The old refresh token dies the instant the new one is
+// issued (rotation) -- this route deliberately keeps a copy of it so you can press
+// "replay" and watch reuse detection revoke the whole family.
 export async function GET(req: Request) {
   const replay = new URL(req.url).searchParams.get("replay") === "1";
   const csid = (await cookies()).get("client_session")?.value ?? "";
@@ -27,7 +29,12 @@ export async function GET(req: Request) {
   });
   const out = await res.json();
   if (out.error) sess.error = out.error + ": " + out.error_description;
-  else { g.__oldRt = current; sess.tokens = out; sess.error = undefined; }
+  else {
+    g.__oldRt = current;
+    sess.previous = sess.tokens;   // keep the old set so the UI can show what changed
+    sess.tokens = out;
+    sess.error = undefined;
+  }
 
   return Response.redirect(PROVIDER + "/client", 302);
 }
